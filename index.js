@@ -5,7 +5,7 @@ export const DB = env => {
   if (!env) throw new Error('No env provided')
   let db
   // is it a database?
-  if (!!env[key].prepare) {
+  if (!!env.prepare) {
     db = env
   } else {
     // find the first database
@@ -45,7 +45,7 @@ export const DB = env => {
   const statement = `select * from data where id = ?`
   const { success, meta, results } = await db.prepare(statement).bind(id).all()
   results.map(item => item.data = JSON.parse(item.data))
-  console.log({ db: key, id, meta, results })
+  console.log({ id, meta, results })
   return { success, data: results, meta: camelcaseKeys(meta) }
   }
 
