@@ -1,0 +1,32 @@
+{
+  "name": "d1-json",
+  "version": "0.0.1",
+  "description": "JSON CRUD + Search Functions for Cloudflare D1",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "vitest --globals"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nathanclevenger/d1-json.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nathanclevenger/d1-json/issues"
+  },
+  "homepage": "https://github.com/nathanclevenger/d1-json#readme",
+  "devDependencies": {
+    "vitest": "^0.33.0"
+  },
+  "dependencies": {
+    "camelcase-keys": "^9.1.0",
+    "js-yaml": "^4.1.0",
+    "openai": "^4.11.1",
+    "partial-json-parser": "^1.2.2",
+    "yaml": "^2.3.2"
+  }
+}
