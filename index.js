@@ -1,7 +1,7 @@
 import { base62 } from './utils.js'
 import camelcaseKeys from 'camelcase-keys'
 
-export const DB = env => {
+export const DB = (env, req) => {
   if (!env) throw new Error('No env provided')
   let db
   // is it a database?
@@ -49,6 +49,18 @@ export const DB = env => {
   return { success, data: results, meta: camelcaseKeys(meta) }
   }
 
+  const createdMetadata = () => ({ 
+    createdAt: new Date(),
+    createdBy: req ? req.user?.email ?? `${req.headers.get('cf-connecting-ip')} - ${req.headers.get('user-agent')}` : null,
+    createdIn: req ? `${req.headers.get('cf-ray')} - ${req.cf?.colo}` : null,
+  })
+
+  const updatedMetadata = () => ({
+    updatedAt: new Date(),
+    updatedBy: req ? req.user?.email ?? `${req.headers.get('cf-connecting-ip')} - ${req.headers.get('user-agent')}` : null,
+    updatedIn: req ? `${req.headers.get('cf-ray')} - ${req.cf?.colo}` : null,
+  })
+
   return new Proxy(db, {
     get: (target, prop) => {
       if (prop in target) return target[prop]
@@ -95,8 +107,11 @@ export const DB = env => {
           return { success, ...results[0], meta: camelcaseKeys(meta) }
         },
         set: async (id, data) => {
-          const statement = `insert into data (type, id, data) values (?, ?, ?) on conflict (type, id) do update set data = json_patch(data, ?)`
-          const { success, results, meta } = await db.prepare(statement).bind(type, id, JSON.stringify(data), JSON.stringify(data)).run()
+          const statement = `insert into data (type, id, data, createdAt, createdBy, createdIn, updatedAt, updatedBy, updatedIn) values (?, ?, ?, ?, ?, ?, ?, ?, ?) on conflict (type, id) do update set data = json_patch(data, ?)`
+          const { createdAt, createdBy, createdIn } = createdMetadata()
+          const { updatedIn, updatedBy, updatedAt } = updatedMetadata()
+          const jsonData = JSON.stringify(data)
+          const { success, results, meta } = await db.prepare(statement).bind(type, id, jsonData, createdAt, createdBy, createdIn, updatedIn, updatedBy, updatedAt, jsonData).run()
           return { success, results, meta: camelcaseKeys(meta) }
         },
         overwrite: async (id, data) => {
@@ -147,7 +162,7 @@ export const DB = env => {
 export const withDB = (req, env, ctx) => {
   Object.keys(env).map(key => {
     if (!!env[key].prepare) {
-      env[key] = DB(env[key])
+      env[key] = DB(env[key], req)
     }
   })
 }
