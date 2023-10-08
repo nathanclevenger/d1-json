@@ -50,13 +50,13 @@ export const DB = (env, req) => {
   }
 
   const createdMetadata = () => ({ 
-    createdAt: Date.now(),
+    // createdAt: Date.now(),
     createdBy: req ? req.user?.email ?? `${req.headers.get('cf-connecting-ip')} - ${req.headers.get('user-agent')}` : null,
     createdIn: req ? `${req.headers.get('cf-ray')} - ${req.cf?.colo}` : null,
   })
 
   const updatedMetadata = () => ({
-    updatedAt: Date.now(),
+    // updatedAt: Date.now(),
     updatedBy: req ? req.user?.email ?? `${req.headers.get('cf-connecting-ip')} - ${req.headers.get('user-agent')}` : null,
     updatedIn: req ? `${req.headers.get('cf-ray')} - ${req.cf?.colo}` : null,
   })
@@ -107,11 +107,11 @@ export const DB = (env, req) => {
           return { success, ...results[0], meta: camelcaseKeys(meta) }
         },
         set: async (id, data) => {
-          const statement = `insert into data (type, id, data, createdAt, createdBy, createdIn, updatedAt, updatedBy, updatedIn) values (?, ?, ?, ?, ?, ?, ?, ?, ?) on conflict (type, id) do update set data = json_patch(data, ?)`
-          const { createdAt, createdBy, createdIn } = createdMetadata()
-          const { updatedIn, updatedBy, updatedAt } = updatedMetadata()
+          const statement = `insert into data (type, id, data, createdAt, createdBy, createdIn, updatedAt, updatedBy, updatedIn) values (?, ?, ?, current_timestamp, ?, ?, current_timestamp, ?, ?) on conflict (type, id) do update set data = json_patch(data, ?)`
+          const { createdBy, createdIn } = createdMetadata()
+          const { updatedBy, updatedIn } = updatedMetadata()
           const jsonData = JSON.stringify(data)
-          const { success, results, meta } = await db.prepare(statement).bind(type, id, jsonData, createdAt, createdBy, createdIn, updatedIn, updatedBy, updatedAt, jsonData).run()
+          const { success, results, meta } = await db.prepare(statement).bind(type, id, jsonData, createdBy, createdIn, updatedIn, updatedBy,  jsonData).run()
           return { success, results, meta: camelcaseKeys(meta) }
         },
         overwrite: async (id, data) => {
